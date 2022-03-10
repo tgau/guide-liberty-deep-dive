@@ -18,6 +18,8 @@
 
   <webApplication contextRoot="/inventory" location="inventory.war" />  
 
+  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
+
   <library id="postgresql-library">
     <fileset dir="${shared.resource.dir}/" includes="*.jar" />
   </library>
