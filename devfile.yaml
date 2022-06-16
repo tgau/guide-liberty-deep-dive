@@ -1,0 +1,66 @@
+schemaVersion: 2.1.0
+metadata:
+  name: guide-liberty-deep-dive
+components:
+  - attributes:
+      app.kubernetes.io/name: tools
+      che-theia.eclipse.org/vscode-extensions:
+        - 'https://github.com/redhat-developer/codeready-workspaces-vscode-extensions/releases/download/7.44-che-assets/java-0.82.0-369.vsix'
+        - 'https://github.com/redhat-developer/codeready-workspaces-vscode-extensions/releases/download/7.44-che-assets/vscode-microprofile-0.1.1-48.vsix'
+        - 'https://github.com/redhat-developer/codeready-workspaces-vscode-extensions/releases/download/7.44-che-assets/vscode-java-debug-0.26.0.vsix'
+        - 'https://open-vsx.org/api/vscjava/vscode-java-test/0.28.1/file/vscjava.vscode-java-test-0.28.1.vsix'
+      che-theia.eclipse.org/vscode-preferences:
+        java.server.launchMode: Standard
+    container:
+      args:
+        - sh
+        - '-c'
+        - '${PLUGIN_REMOTE_ENDPOINT_EXECUTABLE}'
+      endpoints:
+        - exposure: public
+          name: openapi-barista
+          path: /openapi/ui
+          protocol: http
+          targetPort: 9081
+        - exposure: public
+          name: openapi-coffee
+          path: /openapi/ui
+          protocol: http
+          targetPort: 9080
+      env:
+        - name: PLUGIN_REMOTE_ENDPOINT_EXECUTABLE
+          value: /remote-endpoint/plugin-remote-endpoint
+        - name: THEIA_PLUGINS
+          value: 'local-dir:///plugins/sidecars/tools'
+      image: 'quay.io/devfile/universal-developer-image:ubi8-0e189d9'
+      memoryLimit: 4G
+      mountSources: true
+      sourceMapping: /projects
+      volumeMounts:
+        - name: m2
+          path: /home/user/.m2
+        - name: remote-endpoint
+          path: /remote-endpoint
+        - name: plugins
+          path: /plugins
+    name: tools
+  - name: m2
+    volume:
+      size: 1G
+commands:
+  - exec:
+      commandLine: mvn liberty:run
+      component: tools
+      group:
+        isDefault: true
+        kind: build
+      workingDir: '${PROJECT_SOURCE}/start/barista'
+    id: run-barista
+  - exec:
+      commandLine: mvn liberty:dev
+      component: tools
+      group:
+        kind: build
+      label: Package Native
+      workingDir: '${PROJECT_SOURCE}/start/coffee-shop'
+    id: dev-coffee
